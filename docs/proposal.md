@@ -25,4 +25,4 @@ When Jen logs on to the “mindthegap”, she will see an overview of all the av
 
 ## App sketch
 
-See the sketch of the application [here](https://github.com/UBC-MDS/mindthegap/blob/main/img/dashboard-sketch.jpg).
+See the sketch of the application [here](https://github.com/UBC-MDS/mindthegap-R/blob/main/img/dashboard-sketch.jpg).
