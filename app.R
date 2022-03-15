@@ -50,7 +50,8 @@ app$layout(
         options = metrics,
         value='life_expectancy'),
       htmlBr(),
-      dccGraph(id='worldmap')
+      dccGraph(id='worldmap'),
+      dccGraph(id='box-plot')
     )
   )
 )
@@ -70,6 +71,26 @@ app$callback(
   }
 )
 
+# Box Plot
+app$callback(
+  output('box-plot', 'figure'),
+  list(input('yr', 'value'), input('metric', 'value')),
+  function(yr, metric) {
+    filtered_df = filter_data(NULL,NULL, yr)
+
+    p <- ggplot(filtered_df, aes(x = income_group,
+                        y = !!sym(metric),
+                        color = income_group)) +
+      geom_boxplot() +
+      labs(title = paste0(labels[[metric]], " group by Income Group for year ", yr),
+           x = "Income Group", 
+           y = labels[[metric]], 
+           colour = "Income Group") + 
+      ggthemes::scale_color_tableau()
+    
+    ggplotly(p)
+  }
+)
 
 #' Filter data based on region, sub region and year selection
 #'
@@ -99,5 +120,6 @@ filter_data <- function(region = NULL,
   
   filtered_df
 }
+
 
 app$run_server(host = '0.0.0.0')
