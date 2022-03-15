@@ -71,4 +71,33 @@ app$callback(
 )
 
 
+#' Filter data based on region, sub region and year selection
+#'
+#' @param region A character vector to be used to select from the Region filter
+#' @param sub_region A character vector to be used to select from the Sub Region filter
+#' @param yr A numeric vector to be used to select from the Year filter
+#' @return Returns a data frame that has been filtered on region, sub region and country selection
+#' @examples
+#' filter_data("Asia", "Western Asia", 2014)
+filter_data <- function(region = NULL,
+                        sub_region = NULL,
+                        year = NULL) {
+  if (!is.null(sub_region)) {
+    filtered_df <- df |>
+      filter(sub_region == {{ sub_region }})
+  } else if (!is.null(region)) {
+    filtered_df <- df |>
+      filter(region == {{ region }})
+  } else {
+    filtered_df <- df
+  }
+  
+  if (!is.null(year)) {
+    filtered_df <- filtered_df |> 
+      filter(year == {{ year }})
+  }
+  
+  filtered_df
+}
+
 app$run_server(host = '0.0.0.0')
