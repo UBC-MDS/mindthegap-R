@@ -1,6 +1,8 @@
 library(dash)
 library(dashHtmlComponents)
-library(tidyverse)
+library(dplyr)
+library(readr)
+library(tidyr)
 library(plotly)
 app <- Dash$new(external_stylesheets = dbcThemes$BOOTSTRAP)
 
@@ -104,17 +106,17 @@ filter_data <- function(region = NULL,
                         sub_region = NULL,
                         year = NULL) {
   if (!is.null(sub_region)) {
-    filtered_df <- df |>
+    filtered_df <- df %>%
       filter(sub_region == {{ sub_region }})
   } else if (!is.null(region)) {
-    filtered_df <- df |>
+    filtered_df <- df %>%
       filter(region == {{ region }})
   } else {
     filtered_df <- df
   }
   
   if (!is.null(year)) {
-    filtered_df <- filtered_df |> 
+    filtered_df <- filtered_df 
       filter(year == {{ year }})
   }
   
