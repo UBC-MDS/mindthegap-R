@@ -1,0 +1,10 @@
+# docker-compose.yml
+version: '3'
+services:
+  # main application
+  mindthegap:
+    container_name: mindthegap-r
+    build:
+      .
+    ports:
+      - "8050:8050"
