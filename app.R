@@ -1,6 +1,8 @@
 library(dash)
 library(dashHtmlComponents)
-library(tidyverse)
+library(dplyr)
+library(readr)
+library(tidyr)
 library(plotly)
 app <- Dash$new(external_stylesheets = dbcThemes$BOOTSTRAP)
 
@@ -50,7 +52,8 @@ app$layout(
         options = metrics,
         value='life_expectancy'),
       htmlBr(),
-      dccGraph(id='worldmap')
+      dccGraph(id='worldmap'),
+      dccGraph(id='box-plot')
     )
   )
 )
@@ -70,6 +73,26 @@ app$callback(
   }
 )
 
+# Box Plot
+app$callback(
+  output('box-plot', 'figure'),
+  list(input('yr', 'value'), input('metric', 'value')),
+  function(yr, metric) {
+    filtered_df = filter_data(NULL,NULL, yr)
+
+    p <- ggplot(filtered_df, aes(x = income_group,
+                        y = !!sym(metric),
+                        color = income_group)) +
+      geom_boxplot() +
+      labs(title = paste0(labels[[metric]], " group by Income Group for year ", yr),
+           x = "Income Group", 
+           y = labels[[metric]], 
+           colour = "Income Group") + 
+      ggthemes::scale_color_tableau()
+    
+    ggplotly(p)
+  }
+)
 
 #' Filter data based on region, sub region and year selection
 #'
@@ -83,17 +106,17 @@ filter_data <- function(region = NULL,
                         sub_region = NULL,
                         year = NULL) {
   if (!is.null(sub_region)) {
-    filtered_df <- df |>
+    filtered_df <- df %>%
       filter(sub_region == {{ sub_region }})
   } else if (!is.null(region)) {
-    filtered_df <- df |>
+    filtered_df <- df %>%
       filter(region == {{ region }})
   } else {
     filtered_df <- df
   }
   
   if (!is.null(year)) {
-    filtered_df <- filtered_df |> 
+    filtered_df <- filtered_df %>%
       filter(year == {{ year }})
   }
   
