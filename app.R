@@ -116,12 +116,11 @@ filter_data <- function(region = NULL,
   }
   
   if (!is.null(year)) {
-    filtered_df <- filtered_df 
+    filtered_df <- filtered_df %>%
       filter(year == {{ year }})
   }
   
   filtered_df
 }
-
 
 app$run_server(host = '0.0.0.0')
