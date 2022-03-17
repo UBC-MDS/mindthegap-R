@@ -31,7 +31,7 @@ metrics <- list(
 app$layout(
   dbcContainer(
     list(
-
+      h1('Mindthegap Dashboard'),
       dccSlider(
         id="yr",
         min=min(df$year),
