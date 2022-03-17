@@ -4,10 +4,12 @@ library(dplyr)
 library(readr)
 library(tidyr)
 library(plotly)
+
 app <- Dash$new(external_stylesheets = dbcThemes$BOOTSTRAP)
 
-df <- read_csv("data/gapminder.csv") %>% 
-  mutate(log_income = log(income)) %>% 
+# Read in data
+df <- read_csv("data/gapminder.csv") %>%
+  mutate(log_income = log(income)) %>%
   drop_na()
 
 ci <- read_csv('data/country_iso.csv')
@@ -17,24 +19,108 @@ year_range <- seq(min(df$year), max(df$year),5)
 year_range <- setNames(as.list(as.character(year_range)), as.integer(year_range))
 
 
-labels <- list(
-  "life_expectancy" = "Life Expectancy",
-  "pop_density" = "Population Density",
-  "child_mortality" = "Child Mortality"
+
+############################## CONTROL PANEL FILTERS ##############################
+FILTER_STYLE = list("background-color"= "#f8f9fa", "width"= "14rem", "height"= "100%")
+
+filter_panel <- dbcCard(
+  list(
+      # control panel title
+      htmlH2("Control Panel", className="text-center"),
+      htmlBr(),
+      # metric radio button
+      dbcRow(list(
+          htmlH5("1. Metric", className="text-left"),
+          dbcRadioItems(
+            id="metric",
+            options = list(
+                list("label" = "Life Expectancy", "value" = "life_expectancy"),
+                list("label" = "Child Mortality", "value" = "child_mortality"),
+                list("label" = "Population Density", "value" = "pop_density")
+              ),
+            value="life_expectancy",
+            labelStyle=list("display"= "block")
+          )
+        )
+      ),
+      htmlBr(),
+     # continent drop down
+      dbcRow(list(
+          htmlH5("2. Continent", className="text-left"),
+          dccDropdown(
+            id="region",
+            options = list(
+              list(label = "Asia", value = "Asia"),
+              list(label = "Europe", value = "Europe"),
+              list(label = "Africa", value = "Africa"),
+              list(label = "Americas", value = "Americas"),
+              list(label = "Oceania", value = "Oceania")
+            ),
+            value = NULL
+          )
+      )),
+      htmlBr(),
+      # sub-region drop down
+      dbcRow(list(
+          htmlH5("3. Sub Region", className="text-left"),
+          dccDropdown(id="sub_region", value=NULL)
+        )),
+
+      ####### country drop down ######
+      # htmlBr(),
+      # dbcRow(
+      #   [
+      #     htmlH5("4. Country", className="text-left"),
+      #     dccDropdown(
+      #       id="cntry",
+      #       options=[
+      #         {"label": c, "value": c}
+      #         for c in gap["country"].dropna().unique()
+      #       ],
+      #       value=None,
+      #     ),
+      #   ]
+      # ),
+
+      # html.Br(),
+      htmlBr(),
+      # empty plot message
+      htmlSmall(
+        "Note: If a plot is empty, this means that there is no data based on your selections."
+      )),
+    style=FILTER_STYLE,
+    body=TRUE
 )
 
-metrics <- list(
-  list("label" = "Life Expectancy", "value" = "life_expectancy"),
-  list("label" = "Child Mortality", "value" = "child_mortality"),
-  list("label" = "Population Density", "value" = "pop_density")
-)
 
 
-# dashboard layout
+############################## ORIGINAL DASHBOARD LAYOUT ################################
+# labels <- list(
+#   "life_expectancy" = "Life Expectancy",
+#   "pop_density" = "Population Density",
+#   "child_mortality" = "Child Mortality"
+# )
+#
+# metrics <- list(
+#   list("label" = "Life Expectancy", "value" = "life_expectancy"),
+#   list("label" = "Child Mortality", "value" = "child_mortality"),
+#   list("label" = "Population Density", "value" = "pop_density")
+# )
+
+
+
+############################## DASHBOARD LAYOUT ###################################
 app$layout(
   dbcContainer(
     list(
-      h1('Mindthegap Dashboard'),
+      # title
+      htmlDiv(
+        style=list("textAlign"= "center", "color"= "Gray", "font-size"= "26px"),
+        children=list(
+          htmlH1("Mindthegap Dashboard")
+        ),
+      ),
+      htmlBr(),
       dccSlider(
         id="yr",
         min=min(df$year),
@@ -45,21 +131,48 @@ app$layout(
         tooltip=list(
           always_visible=TRUE,
           placement="top"
-        )
+        ),
       ),
       htmlBr(),
-      htmlP("Statistical metric"),
-      dccDropdown(
-        id='metric',
-        options = metrics,
-        value='life_expectancy'),
-      htmlBr(),
-      dccGraph(id='worldmap'),
-      dccGraph(id='box-plot'),
-      dccGraph(id='bubblechart')
-    )
-  )
-)
+      # Control Panel
+      dbcRow(list(dbcCol(filter_panel,
+                         md = 4),
+                  dbcCol(list(
+                    dbcRow(list(
+                      dbcCol(dccGraph(id = "worldmap"), md=6),
+                      dbcCol(dccGraph(id = "box-plot"), md=6)
+                    )),
+                      # dbcCol(dccGraph(id = "worldmap")), md=6),
+                      # dbcCol(dccGraph(id = "box-plot")), md=6)),
+                    dbcRow(list(
+                      dbcCol(dccGraph(id = "plot-area"), md=6),
+                      dbcCol(dccGraph(id = "bubblechart"), md=6)
+                    )),
+                    htmlSmall(
+                      "Note: empty plots mean that we don't have data based on your selection"
+                    )
+                  ), md = 8
+                  )),
+             align = "center")
+    ),
+  fluid = TRUE))
+
+
+############################## TO BE DELETED LATER ###################################
+      # htmlP("Statistical metric"),
+      # dccDropdown(
+      #   id='metric',
+      #   options = metrics,
+      #   value='life_expectancy'),
+      # htmlBr(),
+      # dccGraph(id='worldmap'),
+      # dccGraph(id='box-plot'),
+      # dccGraph(id='bubblechart'),
+      # dccGraph(id='plot-area')
+#     )
+#   )
+# )
+
 
 app$callback(
   output('worldmap', 'figure'),
@@ -88,11 +201,11 @@ app$callback(
                         color = income_group)) +
       geom_boxplot() +
       labs(title = paste0(labels[[metric]], " group by Income Group for year ", yr),
-           x = "Income Group", 
-           y = labels[[metric]], 
-           colour = "Income Group") + 
+           x = "Income Group",
+           y = labels[[metric]],
+           colour = "Income Group") +
       ggthemes::scale_color_tableau()
-    
+
     ggplotly(p)
   }
 )
@@ -103,8 +216,8 @@ app$callback(
   list(input('yr', 'value'), input('metric', 'value')),
   function(yr, metric) {
     filtered_df = filter_data(NULL, NULL, yr)
-    
-    p <- filtered_df %>% 
+
+    p <- filtered_df %>%
       ggplot(
         aes(
           x = log_income,
@@ -121,7 +234,33 @@ app$callback(
           color = "Region",
           size = "Population"
         )
-    
+
+    ggplotly(p)
+  }
+)
+
+# Bar Chart
+app$callback(
+  output('plot-area', 'figure'),
+  list(input('yr', 'value'), input('metric', 'value')),
+
+  function(yr, metric) {
+    df <- df %>%
+      filter(year == yr) %>%
+      arrange(desc(!!sym(metric))) %>%
+      slice(1:10)
+
+    p <- ggplot(df,
+                aes(x = !!sym(metric),
+                    y = reorder(country, !!sym(metric)),
+                    fill = country)) +
+      geom_bar(stat='identity') +
+      labs(title = paste0(labels[[metric]], " - Top 10 Country for Year ", yr),
+           y = "Country",
+           x = labels[[metric]],
+           fill = "Country") +
+      scale_fill_brewer(palette = "Set3")
+      # scale_color_tableau(palette = 'Tableau 20')
     ggplotly(p)
   }
 )
@@ -147,12 +286,12 @@ filter_data <- function(region = NULL,
   } else {
     filtered_df <- df
   }
-  
+
   if (!is.null(year)) {
     filtered_df <- filtered_df %>%
       filter(year == {{ year }})
   }
-  
+
   filtered_df
 }
 
