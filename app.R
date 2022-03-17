@@ -6,7 +6,10 @@ library(tidyr)
 library(plotly)
 app <- Dash$new(external_stylesheets = dbcThemes$BOOTSTRAP)
 
-df <- read_csv("data/gapminder.csv") %>% drop_na()
+df <- read_csv("data/gapminder.csv") %>% 
+  mutate(log_income = log(income)) %>% 
+  drop_na()
+
 ci <- read_csv('data/country_iso.csv')
 df <- merge(df, ci, by = 'country')
 
@@ -27,11 +30,10 @@ metrics <- list(
 )
 
 
-
+# dashboard layout
 app$layout(
   dbcContainer(
     list(
-
       dccSlider(
         id="yr",
         min=min(df$year),
@@ -44,7 +46,6 @@ app$layout(
           placement="top"
         )
       ),
-
       htmlBr(),
       htmlP("Statistical metric"),
       dccDropdown(
@@ -53,7 +54,8 @@ app$layout(
         value='life_expectancy'),
       htmlBr(),
       dccGraph(id='worldmap'),
-      dccGraph(id='box-plot')
+      dccGraph(id='box-plot'),
+      dccGraph(id='bubblechart')
     )
   )
 )
@@ -93,6 +95,36 @@ app$callback(
     ggplotly(p)
   }
 )
+
+# Bubble Chart
+app$callback(
+  output("bubblechart", "figure"),
+  list(input('yr', 'value'), input('metric', 'value')),
+  function(yr, metric) {
+    filtered_df = filter_data(NULL, NULL, yr)
+    
+    p <- filtered_df %>% 
+      ggplot(
+        aes(
+          x = log_income,
+          y = !!sym(metric),
+          color = region,
+        )
+      ) +
+        geom_point() +
+        ggthemes::scale_color_tableau() +
+        labs(
+          x = "Income (Log Scale)",
+          y = labels[[metric]],
+          title = paste0(labels[[metric]], " GDP per Capita ($USD)"),
+          color = "Region",
+          size = "Population"
+        )
+    
+    ggplotly(p)
+  }
+)
+
 
 #' Filter data based on region, sub region and year selection
 #'
