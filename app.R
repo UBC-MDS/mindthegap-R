@@ -60,13 +60,17 @@ filter_panel <- dbcCard(
           )
       )),
       htmlBr(),
-      # sub-region drop down
+
+      #sub-region drop down, to be added
       dbcRow(list(
           htmlH5("3. Sub Region", className="text-left"),
-          dccDropdown(id="sub_region", value=NULL)
+          dccDropdown(
+            id="sub_region",
+            options = purrr::map(unique(df$sub_region), function(c) list(label = c, value = c)),
+            value=NULL)
         )),
 
-      ####### country drop down ######
+      ####### country drop down still in python format ######
       # htmlBr(),
       # dbcRow(
       #   [
@@ -81,7 +85,6 @@ filter_panel <- dbcCard(
       #     ),
       #   ]
       # ),
-
       # html.Br(),
       htmlBr(),
       # empty plot message
@@ -94,7 +97,7 @@ filter_panel <- dbcCard(
 
 
 
-############################## ORIGINAL DASHBOARD LAYOUT ################################
+############################## ORIGINAL METRICs ################################
 # labels <- list(
 #   "life_expectancy" = "Life Expectancy",
 #   "pop_density" = "Population Density",
@@ -106,7 +109,7 @@ filter_panel <- dbcCard(
 #   list("label" = "Child Mortality", "value" = "child_mortality"),
 #   list("label" = "Population Density", "value" = "pop_density")
 # )
-
+#
 
 
 ############################## DASHBOARD LAYOUT ###################################
@@ -138,19 +141,18 @@ app$layout(
       dbcRow(list(dbcCol(filter_panel,
                          md = 4),
                   dbcCol(list(
+                    # dbcRow(dccGraph(id = "worldmap")),
                     dbcRow(list(
                       dbcCol(dccGraph(id = "worldmap"), md=6),
                       dbcCol(dccGraph(id = "box-plot"), md=6)
                     )),
-                      # dbcCol(dccGraph(id = "worldmap")), md=6),
-                      # dbcCol(dccGraph(id = "box-plot")), md=6)),
                     dbcRow(list(
                       dbcCol(dccGraph(id = "plot-area"), md=6),
                       dbcCol(dccGraph(id = "bubblechart"), md=6)
-                    )),
-                    htmlSmall(
-                      "Note: empty plots mean that we don't have data based on your selection"
-                    )
+                    ))
+                    # htmlSmall(
+                    #   "Note: empty plots mean that we don't have data based on your selection"
+                    # )
                   ), md = 8
                   )),
              align = "center")
@@ -158,17 +160,32 @@ app$layout(
   fluid = TRUE))
 
 
-############################## TO BE DELETED LATER ###################################
-      # htmlP("Statistical metric"),
-      # dccDropdown(
-      #   id='metric',
-      #   options = metrics,
-      #   value='life_expectancy'),
-      # htmlBr(),
-      # dccGraph(id='worldmap'),
-      # dccGraph(id='box-plot'),
-      # dccGraph(id='bubblechart'),
-      # dccGraph(id='plot-area')
+############################## ORIGINAL LAYOUT ###################################
+# app$layout(
+#   dbcContainer(
+#     list(
+#       dccSlider(
+#         id="yr",
+#         min=min(df$year),
+#         max=max(df$year),
+#         step=1,
+#         value=max(df$year),
+#         marks=year_range,
+#         tooltip=list(
+#           always_visible=TRUE,
+#           placement="top"
+#         )
+#       ),
+#     htmlP("Statistical metric"),
+#     dccDropdown(
+#       id='metric',
+#       options = metrics,
+#       value='life_expectancy'),
+#     htmlBr(),
+#     dccGraph(id='worldmap'),
+#     dccGraph(id='box-plot'),
+#     dccGraph(id='bubblechart'),
+#     dccGraph(id='plot-area')
 #     )
 #   )
 # )
@@ -245,12 +262,16 @@ app$callback(
   list(input('yr', 'value'), input('metric', 'value')),
 
   function(yr, metric) {
-    df <- df %>%
-      filter(year == yr) %>%
+
+    filtered_df = filter_data(NULL, NULL, yr) |>
       arrange(desc(!!sym(metric))) %>%
       slice(1:10)
+    # df <- df %>%
+    #   filter(year == yr) %>%
+    #   arrange(desc(!!sym(metric))) %>%
+    #   slice(1:10)
 
-    p <- ggplot(df,
+    p <- ggplot(filtered_df,
                 aes(x = !!sym(metric),
                     y = reorder(country, !!sym(metric)),
                     fill = country)) +
