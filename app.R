@@ -224,9 +224,14 @@ app$callback(
 # Box Plot
 app$callback(
   output("box-plot", "figure"),
-  list(input("yr", "value"), input("metric", "value")),
-  function(yr, metric) {
-    filtered_df <- filter_data(NULL, NULL, yr)
+  list(
+    input("region", "value"),
+    input("sub_region", "value"),
+    input("yr", "value"),
+    input("metric", "value")
+  ),
+  function(region, sub_region, yr, metric) {
+    filtered_df <- filter_data(region, sub_region, yr)
 
     p <- ggplot(filtered_df, aes(
       x = income_group,
@@ -283,9 +288,14 @@ app$callback(
 # Bar Chart
 app$callback(
   output("plot-area", "figure"),
-  list(input("yr", "value"), input("metric", "value")),
-  function(yr, metric) {
-    filtered_df <- filter_data(NULL, NULL, yr) |>
+  list(
+    input("region", "value"),
+    input("sub_region", "value"),
+    input("yr", "value"),
+    input("metric", "value")
+  ),
+  function(region, sub_region, yr, metric) {
+    filtered_df <- filter_data(region, sub_region, yr) |>
       arrange(desc(!!sym(metric))) %>%
       slice(1:10)
     # df <- df %>%
