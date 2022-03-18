@@ -243,7 +243,7 @@ app$callback(
     input("metric", "value")
   ),
   function(region, sub_region, yr, metric) {
-    filtered_df <- filter_data(region, sub_region, yr) |>
+    filtered_df <- filter_data(region, sub_region, yr) %>%
       arrange(desc(!!sym(metric))) %>%
       slice(1:10)
 
