@@ -249,9 +249,14 @@ app$callback(
 # Bubble Chart
 app$callback(
   output("bubblechart", "figure"),
-  list(input("yr", "value"), input("metric", "value")),
-  function(yr, metric) {
-    filtered_df <- filter_data(NULL, NULL, yr)
+  list(
+    input("region", "value"),
+    input("sub_region", "value"),
+    input("yr", "value"),
+    input("metric", "value")
+  ),
+  function(region, sub_region, yr, metric) {
+    filtered_df <- filter_data(region, sub_region, yr)
 
     p <- filtered_df %>%
       ggplot(
@@ -320,6 +325,9 @@ app$callback(
 filter_data <- function(region = NULL,
                         sub_region = NULL,
                         year = NULL) {
+  region <- unlist(region)
+  sub_region <- unlist(sub_region)
+  
   if (!is.null(sub_region)) {
     filtered_df <- df %>%
       filter(sub_region == {{ sub_region }})
