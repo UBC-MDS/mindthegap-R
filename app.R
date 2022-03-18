@@ -59,8 +59,7 @@ filter_panel <- dbcCard(
       )
     )),
     htmlBr(),
-
-    # sub-region drop down, to be added
+    # sub-region drop down
     dbcRow(list(
       htmlH5("3. Sub Region", className = "text-left"),
       dccDropdown(
@@ -70,22 +69,6 @@ filter_panel <- dbcCard(
       )
     )),
 
-    ####### country drop down still in python format ######
-    # htmlBr(),
-    # dbcRow(
-    #   [
-    #     htmlH5("4. Country", className="text-left"),
-    #     dccDropdown(
-    #       id="cntry",
-    #       options=[
-    #         {"label": c, "value": c}
-    #         for c in gap["country"].dropna().unique()
-    #       ],
-    #       value=None,
-    #     ),
-    #   ]
-    # ),
-    # html.Br(),
     htmlBr(),
     # empty plot message
     htmlSmall(
@@ -98,7 +81,7 @@ filter_panel <- dbcCard(
 
 
 
-############################## ORIGINAL METRICs ################################
+############################## ORIGINAL METRICS ################################
 labels <- list(
   "life_expectancy" = "Life Expectancy",
   "pop_density" = "Population Density",
@@ -144,7 +127,6 @@ app$layout(
           md = 4
         ),
         dbcCol(list(
-          # dbcRow(dccGraph(id = "worldmap")),
           dbcRow(list(
             dbcCol(dccGraph(id = "worldmap"), md = 6),
             dbcCol(dccGraph(id = "box-plot"), md = 6)
@@ -153,9 +135,6 @@ app$layout(
             dbcCol(dccGraph(id = "plot-area"), md = 6),
             dbcCol(dccGraph(id = "bubblechart"), md = 6)
           ))
-          # htmlSmall(
-          #   "Note: empty plots mean that we don't have data based on your selection"
-          # )
         ), md = 8)
       ),
       align = "center"
@@ -164,37 +143,6 @@ app$layout(
     fluid = TRUE
   )
 )
-
-
-############################## ORIGINAL LAYOUT ###################################
-# app$layout(
-#   dbcContainer(
-#     list(
-#       dccSlider(
-#         id="yr",
-#         min=min(df$year),
-#         max=max(df$year),
-#         step=1,
-#         value=max(df$year),
-#         marks=year_range,
-#         tooltip=list(
-#           always_visible=TRUE,
-#           placement="top"
-#         )
-#       ),
-#     htmlP("Statistical metric"),
-#     dccDropdown(
-#       id='metric',
-#       options = metrics,
-#       value='life_expectancy'),
-#     htmlBr(),
-#     dccGraph(id='worldmap'),
-#     dccGraph(id='box-plot'),
-#     dccGraph(id='bubblechart'),
-#     dccGraph(id='plot-area')
-#     )
-#   )
-# )
 
 
 app$callback(
@@ -298,10 +246,7 @@ app$callback(
     filtered_df <- filter_data(region, sub_region, yr) |>
       arrange(desc(!!sym(metric))) %>%
       slice(1:10)
-    # df <- df %>%
-    #   filter(year == yr) %>%
-    #   arrange(desc(!!sym(metric))) %>%
-    #   slice(1:10)
+
     p <- ggplot(
       filtered_df,
       aes(
@@ -337,7 +282,7 @@ filter_data <- function(region = NULL,
                         year = NULL) {
   region <- unlist(region)
   sub_region <- unlist(sub_region)
-  
+
   if (!is.null(sub_region)) {
     filtered_df <- df %>%
       filter(sub_region == {{ sub_region }})
