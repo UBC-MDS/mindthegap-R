@@ -108,7 +108,9 @@ app$layout(
         ),
       ),
       htmlBr(),
-      dccSlider(
+      htmlH3("Select Year"),
+      dbcRow(
+        dccSlider(
         id = "yr",
         min = min(df$year),
         max = max(df$year),
@@ -119,7 +121,9 @@ app$layout(
           always_visible = TRUE,
           placement = "top"
         ),
+      )
       ),
+
       htmlBr(),
       # Control Panel
       dbcRow(list(
@@ -211,23 +215,21 @@ app$callback(
   function(region, sub_region, yr, metric) {
     filtered_df <- filter_data(region, sub_region, yr)
 
-    p <- filtered_df %>%
-      ggplot(
-        aes(
-          x = log_income,
-          y = !!sym(metric),
-          color = region,
-        )
-      ) +
-      geom_point() +
-      ggthemes::scale_color_tableau() +
-      labs(
-        x = "Income (Log Scale)",
-        y = labels[[metric]],
-        title = paste0(labels[[metric]], " GDP per Capita ($USD)"),
-        color = "Region",
-        size = "Population"
-      )
+
+
+    p <- plot_ly(filtered_df, x = ~log_income, y = ~ filtered_df[, metric], color = ~region,
+                           type = 'scatter', mode = 'markers', size = ~ pop_density,
+                           marker = list(symbol = 'circle', sizemode = 'diameter',
+                                         line = list(width = 2, color = '#FFFFFF')),
+                           text = ~paste('Country:', country, '<br>', labels[[metric]], ':', metric, '<br>GDP:', log_income,
+                                         '<br>Pop density:', pop_density))
+    p <- p %>% layout(
+            title = paste0(labels[[metric]], " GDP per Capita ($USD) by region"),
+                          xaxis = list(title = 'GDP per capita (2000 dollars)'),
+
+                          yaxis = list(title = paste0(labels[[metric]])))
+
+
 
     ggplotly(p)
   }
