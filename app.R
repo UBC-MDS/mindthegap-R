@@ -347,14 +347,16 @@ app$callback(
   output("sub_region", "options"),
   list(input("region", "value")),
   function(region){
-    options=c()
+
     if(is.null(region[[1]])){
+      options=c()
       all_sr <- df %>% select(sub_region) %>% drop_na() %>% unique()
       for(sub_region in all_sr){
         options <- append(options, c(value = sub_region))
       }
     }
     else{
+      options=c()
       sub_regions <- df %>% filter(region == {{region}}) %>% select(sub_region) %>% drop_na() %>% unique()
       for (sr in sub_regions){
         options <- append(options, c(value = sr))
