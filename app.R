@@ -21,10 +21,10 @@ year_range <- setNames(as.list(as.character(year_range)), as.integer(year_range)
 
 
 ############################## CONTROL PANEL FILTERS ##############################
-FILTER_STYLE <- list("background-color" = "#f8f9fa", "width" = "14rem", "height" = "100%")
+FILTER_STYLE <- list("background-color" = "#f8f9fa", "width" = "15rem", "height" = "100%")
 
 filter_panel <- dbcCard(
-  list(
+ dbcCol(list(
     # control panel title
     htmlH2("Control Panel", className = "text-center"),
     htmlBr(),
@@ -61,10 +61,10 @@ filter_panel <- dbcCard(
     htmlBr(),
     # sub-region drop down
     dbcRow(list(
-      htmlH5("3. Sub Region", className = "text-left"),
+      htmlH5("3. Sub Continent", className = "text-left"),
       dccDropdown(
         id = "sub_region",
-        options = purrr::map(unique(df$sub_region), function(c) list(label = c, value = c)),
+        # options = purrr::map(unique(df$sub_region), function(c) list(label = c, value = c)),
         value = NULL
       )
     )),
@@ -74,7 +74,9 @@ filter_panel <- dbcCard(
     htmlSmall(
       "Note: If a plot is empty, this means that there is no data based on your selections."
     )
-  ),
+
+
+  ), md=12),
   style = FILTER_STYLE,
   body = TRUE
 )
@@ -108,41 +110,67 @@ app$layout(
         ),
       ),
       htmlBr(),
-      dccSlider(
-        id = "yr",
-        min = min(df$year),
-        max = max(df$year),
-        step = 1,
-        value = max(df$year),
-        marks = year_range,
-        tooltip = list(
-          always_visible = TRUE,
-          placement = "top"
-        ),
-      ),
-      htmlBr(),
-      # Control Panel
       dbcRow(list(
-        dbcCol(filter_panel,
-          md = 4
-        ),
+        dbcCol(filter_panel, md=3),
+
         dbcCol(list(
-          dbcRow(list(
-            dbcCol(dccGraph(id = "worldmap"), md = 6),
-            dbcCol(dccGraph(id = "box-plot"), md = 6)
-          )),
-          dbcRow(list(
-            dbcCol(dccGraph(id = "plot-area"), md = 6),
-            dbcCol(dccGraph(id = "bubblechart"), md = 6)
-          ))
-        ), md = 8)
-      ),
-      align = "center"
+                htmlH3("Select Year"),
+                dccSlider(
+                  id = "yr",
+                  min = min(df$year),
+                  max = max(df$year),
+                  step = 1,
+                  value = max(df$year),
+                  marks = year_range,
+                  tooltip = list(
+                    always_visible = TRUE,
+                    placement = "top"
+                  )
+                ),
+
+               dbcRow(dccGraph(id = "worldmap")),
+               dbcRow(
+                 list(
+                   dbcCol(
+                     dbcCard(
+                       dccGraph(
+                         id = "plot-bar")
+                       ), md=6
+                     ),
+                   dbcCol(
+                    list(
+                     htmlDiv(
+
+                       dbcTabs(
+
+                           children=list(
+                             dbcTab(
+
+                               label = "GDP",
+                               tab_id = "gdp"
+                             ),
+                             dbcTab(
+                               label="Income",
+                               tab_id="income"
+                             )
+                             ),
+                           id = "tabs",
+                           active_tab = "gdp",
+                           )
+                           ),
+
+                     htmlDiv(id = "tab-content")
+                    )
+                     )
+                   )
+              )
+       ), md=9)
+)
       )
-    ),
-    fluid = TRUE
+    )
   )
 )
+
 
 
 app$callback(
@@ -168,6 +196,22 @@ app$callback(
     map
   }
 )
+
+
+
+app$callback(
+  output("tab-content", "children"),
+  list(input("tabs", "active_tab")),
+  function(tabs){
+    if(tabs == "gdp"){
+
+      return(htmlDiv(dccGraph(id = "bubblechart")))}
+    else if(tabs == "income"){
+      return(htmlDiv(dccGraph(id = "box-plot")))}
+
+  }
+)
+
 
 # Box Plot
 app$callback(
@@ -211,31 +255,52 @@ app$callback(
   function(region, sub_region, yr, metric) {
     filtered_df <- filter_data(region, sub_region, yr)
 
-    p <- filtered_df %>%
-      ggplot(
-        aes(
-          x = log_income,
-          y = !!sym(metric),
-          color = region,
-        )
-      ) +
-      geom_point() +
-      ggthemes::scale_color_tableau() +
-      labs(
-        x = "Income (Log Scale)",
-        y = labels[[metric]],
-        title = paste0(labels[[metric]], " GDP per Capita ($USD)"),
-        color = "Region",
-        size = "Population"
-      )
+
+    if (!is.null(region) && !is.null(sub_region)){
+      p <- plot_ly(filtered_df, x = ~log_income, y = ~ filtered_df[, metric], color = ~country,
+                   type = 'scatter', mode = 'markers', size = ~ pop_density,
+                   marker = list(symbol = 'circle', sizemode = 'diameter',
+                                 line = list(width = 2, color = '#FFFFFF')),
+                   text = ~paste('Country:', country, '<br>', labels[[metric]], ':', metric, '<br>GDP:', log_income,
+                                 '<br>Pop density:', pop_density))
+
+
+    }
+    else if(!is.null(region) && is.null(sub_region)){
+      p <- plot_ly(filtered_df, x = ~log_income, y = ~ filtered_df[, metric], color = ~sub_region,
+                   type = 'scatter', mode = 'markers', size = ~ pop_density,
+                   marker = list(symbol = 'circle', sizemode = 'diameter',
+                                 line = list(width = 2, color = '#FFFFFF')),
+                   text = ~paste('Country:', country, '<br>', labels[[metric]], ':', metric, '<br>GDP:', log_income,
+                                 '<br>Pop density:', pop_density))
+
+
+
+    }
+    else{
+      p <- plot_ly(filtered_df, x = ~log_income, y = ~ filtered_df[, metric], color = ~region,
+                             type = 'scatter', mode = 'markers', size = ~ pop_density,
+                             marker = list(symbol = 'circle', sizemode = 'diameter',
+                                           line = list(width = 2, color = '#FFFFFF')),
+                             text = ~paste('Country:', country, '<br>', labels[[metric]], ':', metric, '<br>GDP:', log_income,
+                                           '<br>Pop density:', pop_density))
+    }
+    p <- p %>% layout(
+            title = paste0(labels[[metric]], " GDP per Capita ($USD) by region"),
+                          xaxis = list(title = 'GDP per capita (2000 dollars)'),
+
+                          yaxis = list(title = paste0(labels[[metric]])))
 
     ggplotly(p)
   }
 )
 
+
+
+
 # Bar Chart
 app$callback(
-  output("plot-area", "figure"),
+  output("plot-bar", "figure"),
   list(
     input("region", "value"),
     input("sub_region", "value"),
@@ -263,11 +328,44 @@ app$callback(
         fill = "Country"
       ) +
       scale_fill_brewer(palette = "Set3")
-    # scale_color_tableau(palette = 'Tableau 20')
+
     ggplotly(p)
   }
 )
 
+
+app$callback(
+  output("sub_region", "options"),
+  list(input("region", "value")),
+  function(region){
+    options=c()
+    if(is.null(region)){
+      all_sr <- df$sub_region %>% drop_na() %>% unique()
+      print(all_sr)
+
+      for(sub_region in all_sr){
+        options <- append(options, c(label = sub_region, value = sub_region))
+      }
+    }
+
+    else{
+      sub_regions <- df %>% filter(region == {{region}}) %>% select(sub_region) %>% drop_na() %>% unique()
+      for (sr in sub_regions){
+        options <- append(options, c(label= sr, value = sr))
+      }
+
+
+
+    }
+
+
+  print(options)
+  options
+
+  }
+
+
+)
 
 #' Filter data based on region, sub region and year selection
 #'
@@ -300,5 +398,10 @@ filter_data <- function(region = NULL,
 
   filtered_df
 }
+
+
+
+
+
 
 app$run_server(host = "0.0.0.0")
