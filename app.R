@@ -337,7 +337,12 @@ app$callback(
   }
 )
 
-
+#' Filter sub regions based on regions
+#'
+#' @param region Region selected form the Continent filter
+#' @return Returns list of options with labels and values
+#' @examples
+#' filter_data("Asia", "Western Asia", 2014)
 app$callback(
   output("sub_region", "options"),
   list(input("region", "value")),
@@ -391,10 +396,5 @@ filter_data <- function(region = NULL,
 
   filtered_df
 }
-
-
-
-
-
 
 app$run_server(host = "0.0.0.0")
