@@ -55,7 +55,7 @@ filter_panel <- dbcCard(
           list(label = "Americas", value = "Americas"),
           list(label = "Oceania", value = "Oceania")
         ),
-        value = "Asia"
+        value = NULL
       )
     )),
     htmlBr(),
@@ -64,7 +64,7 @@ filter_panel <- dbcCard(
       htmlH5("3. Sub Continent", className = "text-left"),
       dccDropdown(
         id = "sub_region",
-        options = purrr::map(unique(df$sub_region), function(c) list(label = c, value = c)),
+        # options = purrr::map(unique(df$sub_region), function(c) list(label = c, value = c)),
         value = NULL
       )
     )),
@@ -76,57 +76,7 @@ filter_panel <- dbcCard(
     )
 
 
-  ), md=12)
-    # control panel title
-    # htmlH2("Control Panel", className = "text-center"),
-    # htmlBr(),
-    # # metric radio button
-    # dbcRow(list(
-    #   htmlH5("1. Metric", className = "text-left"),
-    #   dbcRadioItems(
-    #     id = "metric",
-    #     options = list(
-    #       list("label" = "Life Expectancy", "value" = "life_expectancy"),
-    #       list("label" = "Child Mortality", "value" = "child_mortality"),
-    #       list("label" = "Population Density", "value" = "pop_density")
-    #     ),
-    #     value = "life_expectancy",
-    #     labelStyle = list("display" = "block")
-    #   )
-    # )),
-    # htmlBr(),
-    # # continent drop down
-    # dbcRow(list(
-    #   htmlH5("2. Continent", className = "text-left"),
-    #   dccDropdown(
-    #     id = "region",
-    #     options = list(
-    #       list(label = "Asia", value = "Asia"),
-    #       list(label = "Europe", value = "Europe"),
-    #       list(label = "Africa", value = "Africa"),
-    #       list(label = "Americas", value = "Americas"),
-    #       list(label = "Oceania", value = "Oceania")
-    #     ),
-    #     value = NULL
-    #   )
-    # )),
-    # htmlBr(),
-    # # sub-region drop down
-    # dbcRow(list(
-    #   htmlH5("3. Sub Continent", className = "text-left"),
-    #   dccDropdown(
-    #     id = "sub_region",
-    #     options = purrr::map(unique(df$sub_region), function(c) list(label = c, value = c)),
-    #     value = NULL
-    #   )
-    # )),
-    #
-    # htmlBr(),
-    # # empty plot message
-    # htmlSmall(
-    #   "Note: If a plot is empty, this means that there is no data based on your selections."
-    # )
-  ,
+  ), md=12),
   style = FILTER_STYLE,
   body = TRUE
 )
@@ -177,7 +127,6 @@ app$layout(
                     placement = "top"
                   )
                 ),
-               # , md=9,
 
                dbcRow(dccGraph(id = "worldmap")),
                dbcRow(
@@ -212,8 +161,6 @@ app$layout(
 
                      htmlDiv(id = "tab-content")
                     )
-
-
                      )
                    )
               )
@@ -224,36 +171,6 @@ app$layout(
   )
 )
 
-
-
-
-
-
-
-
-
-    #   dbcRow(),
-    #   # Control Panel
-    #   # dbcRow(list(
-    #     # dbcCol(filter_panel,
-    #       # md = 4
-    #     # ),
-    #     dbcCol(list(
-    #       dbcRow(dbcCol(dccGraph(id = "worldmap"), md = 12)),
-    #         # dbcCol(dccGraph(id = "box-plot"), md = 6)
-    #
-    #       dbcRow(list(
-    #         dbcCol(dccGraph(id = "plot-area"), md = 6),
-    #         dbcCol(dccGraph(id = "bubblechart"), md = 6)
-    #       ))
-    #     ), md = 8),
-    #   # ),
-    #   # align = "center"
-    #   )
-    # ),
-    # fluid = TRUE
-  # )
-# )
 
 
 app$callback(
@@ -287,12 +204,10 @@ app$callback(
   list(input("tabs", "active_tab")),
   function(tabs){
     if(tabs == "gdp"){
-      # return(htmlDiv(htmlH1("bubble")))}
+
       return(htmlDiv(dccGraph(id = "bubblechart")))}
     else if(tabs == "income"){
       return(htmlDiv(dccGraph(id = "box-plot")))}
-      # return(htmlDiv(htmlH1("box")))}
-
 
   }
 )
@@ -376,8 +291,6 @@ app$callback(
 
                           yaxis = list(title = paste0(labels[[metric]])))
 
-
-
     ggplotly(p)
   }
 )
@@ -415,11 +328,46 @@ app$callback(
         fill = "Country"
       ) +
       scale_fill_brewer(palette = "Set3")
-    # scale_color_tableau(palette = 'Tableau 20')
+
     ggplotly(p)
   }
 )
 
+
+app$callback(
+  output("sub_region", "options"),
+  list(input("region", "value")),
+  function(region){
+    options=list()
+    if(is.null(region)){
+      all_sr <- df$sub_region |> drop_na() |> unique()
+      print(all_sr)
+
+      for(sub_region in all_sr){
+        options <- append(options, list(label = sub_region, value = sub_region))
+      }
+    }
+
+    else{
+      sub_regions <- df |> filter(region == {{region}}) |> select(sub_region) |> drop_na() |> unique()
+      for (sr in sub_regions){
+        options <- append(options, list("label"= sr, "value"= sr))
+      }
+
+
+      # sub_regions <-  list(gap[gap["region"] == region]["sub_region"].unique())
+    }
+
+    print(length(options))
+    print(list(options))
+    options
+    # print(purrr::map(options, function(c) list(label = c, value = c)))
+
+
+  }
+
+
+)
 
 #' Filter data based on region, sub region and year selection
 #'
