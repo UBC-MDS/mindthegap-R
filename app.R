@@ -338,31 +338,29 @@ app$callback(
   output("sub_region", "options"),
   list(input("region", "value")),
   function(region){
-    options=list()
+    options=c()
     if(is.null(region)){
       all_sr <- df$sub_region |> drop_na() |> unique()
       print(all_sr)
 
       for(sub_region in all_sr){
-        options <- append(options, list(label = sub_region, value = sub_region))
+        options <- append(options, c(label = sub_region, value = sub_region))
       }
     }
 
     else{
       sub_regions <- df |> filter(region == {{region}}) |> select(sub_region) |> drop_na() |> unique()
       for (sr in sub_regions){
-        options <- append(options, list("label"= sr, "value"= sr))
+        options <- append(options, c(label= sr, value = sr))
       }
 
 
-      # sub_regions <-  list(gap[gap["region"] == region]["sub_region"].unique())
+
     }
 
-    print(length(options))
-    print(list(options))
-    options
-    # print(purrr::map(options, function(c) list(label = c, value = c)))
 
+  print(options)
+  options
 
   }
 
