@@ -191,7 +191,7 @@ app$callback(
       colorscale = "Viridis",
       color = metric) %>%
       layout(
-        title = paste(labels[[metric]], "by country for year", yr)
+        title = list(text=paste("<b>", labels[[metric]], "by country for year", yr, "</b>")), font = list(size = 10)
       )
     map
   }
@@ -237,7 +237,10 @@ app$callback(
         y = labels[[metric]],
         colour = "Income Group"
       ) +
-      ggthemes::scale_color_tableau()
+      ggthemes::scale_color_tableau() +
+      theme(
+        plot.title = element_text(size=10, face="bold")
+      )
 
     ggplotly(p)
   }
@@ -286,11 +289,9 @@ app$callback(
                                            '<br>Pop density:', pop_density))
     }
     p <- p %>% layout(
-            title = paste0(labels[[metric]], " GDP per Capita ($USD) by region"),
+            title = list(text = paste0("<b>", labels[[metric]], " GDP per Capita ($USD) by region</b>"), font = list(size = 12, color = "black")),
                           xaxis = list(title = 'GDP per capita (2000 dollars)'),
-
                           yaxis = list(title = paste0(labels[[metric]])))
-
     ggplotly(p)
   }
 )
@@ -327,44 +328,41 @@ app$callback(
         x = labels[[metric]],
         fill = "Country"
       ) +
-      scale_fill_brewer(palette = "Set3")
+      scale_fill_brewer(palette = "Set3") +
+      theme(
+        plot.title = element_text(size=10, face="bold")
+      )
 
     ggplotly(p)
   }
 )
 
-
+#' Filter sub regions based on regions
+#'
+#' @param region Region selected form the Continent filter
+#' @return Returns list of options with labels and values
+#' @examples
+#' filter_data("Asia", "Western Asia", 2014)
 app$callback(
   output("sub_region", "options"),
   list(input("region", "value")),
   function(region){
     options=c()
-    if(is.null(region)){
-      all_sr <- df$sub_region %>% drop_na() %>% unique()
-      print(all_sr)
-
+    if(is.null(region[[1]])){
+      all_sr <- df %>% select(sub_region) %>% drop_na() %>% unique()
       for(sub_region in all_sr){
         options <- append(options, c(label = sub_region, value = sub_region))
       }
     }
-
     else{
       sub_regions <- df %>% filter(region == {{region}}) %>% select(sub_region) %>% drop_na() %>% unique()
       for (sr in sub_regions){
         options <- append(options, c(label= sr, value = sr))
       }
-
-
-
     }
 
-
-  print(options)
   options
-
   }
-
-
 )
 
 #' Filter data based on region, sub region and year selection
@@ -398,10 +396,5 @@ filter_data <- function(region = NULL,
 
   filtered_df
 }
-
-
-
-
-
 
 app$run_server(host = "0.0.0.0")
